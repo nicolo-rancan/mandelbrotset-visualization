@@ -2,7 +2,7 @@
 
 [![GitHub license](https://img.shields.io/github/license/alex-sandri/classeviva-api)](https://github.com/alex-sandri/classeviva-api/blob/master/LICENSE)
 
-###### The mandelbrot set is a graphical rappresentation.
+###### The mandelbrot set is a graphical rappresentation visible [here](https://nicolo-rancan.github.io/mandelbrotset-visualization/)
 
 <br />
 
