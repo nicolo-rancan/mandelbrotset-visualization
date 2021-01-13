@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Mandelbrot Set</title>
+    <script language="javascript" type="text/javascript" src="https://cdn.jsdelivr.net/npm/p5@1.1.9/lib/p5.min.js"></script>
+
+    <style>
+      body {
+        background: black;
+        width: 100vw;
+        height: 100vh;
+        overflow: hidden;
+        display: flex;
+      }
+
+      main {
+        margin: 0 auto auto auto;
+      }
+
+      input {
+        position: absolute;
+      }
+    </style>
+  </head>
+
+  <body>
+    <input type="range" min="200" max="1500" step="50" value="500" id="wdth" />
+
+    <script>
+      let cnv;
+
+      let maxX = 2.5;
+      let minX = -2.5;
+      let maxY = 2.5;
+      let minY = -2.5;
+
+      let pageCenterX;
+      let pageCenterY;
+
+      let mouseStartX = 0;
+      let mouseStartY = 0;
+      let mouseEndX = 0;
+      let mouseEndY = 0;
+
+      let originX = 0;
+      let originY = 0;
+
+      let iterationCounter = 60;
+      let range = 2.5;
+      let frDiv;
+
+      function setup() {
+        document.getElementById("wdth").addEventListener("change", () => {
+          redraw();
+        });
+
+        pageCenterX = document.getElementById("wdth").value / 2;
+        pageCenterY = document.getElementById("wdth").value / 2;
+
+        cnv = createCanvas(document.getElementById("wdth").value, document.getElementById("wdth").value);
+        frDiv = createDiv("");
+        noLoop();
+      }
+
+      function draw() {
+        pageCenterX = document.getElementById("wdth").value / 2;
+        pageCenterY = document.getElementById("wdth").value / 2;
+        resizeCanvas(document.getElementById("wdth").value, document.getElementById("wdth").value);
+        clear();
+
+        loadPixels();
+
+        for (let i = 0; i < document.getElementById("wdth").value; i++) {
+          for (let j = 0; j < document.getElementById("wdth").value; j++) {
+            let a = map(i, 0, document.getElementById("wdth").value, minX, maxX);
+            let b = map(j, 0, document.getElementById("wdth").value, minY, maxY);
+            let res = calcolaPunto(a, b, iterationCounter, range);
+
+            let color = map(res, 0, iterationCounter, 1, 255);
+
+            if (res == -1) {
+              let pix = (i + j * width) * 4;
+              pixels[pix + 0] = 0;
+              pixels[pix + 1] = 0;
+              pixels[pix + 2] = 0;
+              pixels[pix + 3] = 255;
+            } else if (res > -1 && res < iterationCounter - 6) {
+              let pix = (i + j * width) * 4;
+              pixels[pix + 0] = color;
+              pixels[pix + 1] = 0;
+              pixels[pix + 2] = 0;
+              pixels[pix + 3] = 255;
+            } else if (res < iterationCounter - 3) {
+              let pix = (i + j * width) * 4;
+              pixels[pix + 0] = 0;
+              pixels[pix + 1] = 255;
+              pixels[pix + 2] = 0;
+              pixels[pix + 3] = 255;
+            } else {
+              let pix = (i + j * width) * 4;
+              pixels[pix + 0] = 0;
+              pixels[pix + 1] = 0;
+              pixels[pix + 2] = 255;
+              pixels[pix + 3] = 255;
+            }
+          }
+        }
+
+        updatePixels();
+        frDiv.html(floor(frameRate()));
+      }
+
+      function mousePressed() {
+        mouseStartX = mouseX;
+        mouseStartY = mouseY;
+      }
+
+      function mouseReleased() {
+        mouseEndX = mouseX;
+        mouseEndY = mouseY;
+
+        let delta = Math.abs(mouseStartX - mouseEndX);
+
+        mouseEndY = mouseStartY + delta;
+
+        let a = map(mouseStartX, 0, document.getElementById("wdth").value, minX, maxX);
+        let b = map(mouseStartY, 0, document.getElementById("wdth").value, minY, maxY);
+
+        let c = map(mouseEndX, 0, document.getElementById("wdth").value, minX, maxX);
+        let d = map(mouseEndY, 0, document.getElementById("wdth").value, minY, maxY);
+        console.log(a, b, c, d);
+
+        minX = a;
+        minY = b;
+
+        maxX = c;
+        maxY = d;
+
+        iterationCounter += 10;
+
+        if (minX != maxX && minY != maxY) {
+          redraw();
+        }
+      }
+
+      function calcolaPotenza(Real, Immaginary) {
+        let results = [];
+
+        let RealPow = Real * Real;
+        let ImmaginaryPow = Immaginary * Immaginary;
+        let doubleProduct = 2 * Real * Immaginary;
+
+        ImmaginaryPow = -ImmaginaryPow;
+        RealPow += ImmaginaryPow;
+
+        results.push(RealPow, doubleProduct);
+        return results;
+      }
+
+      function aggiungiCostante(doubleReal, doubleProduct, constX, constY) {
+        let results = [];
+
+        doubleReal += constX;
+        doubleProduct += constY;
+
+        results.push(doubleReal);
+        results.push(doubleProduct);
+
+        return results;
+      }
+
+      function calcolaPunto(x, y, numeroIterazioni = 50, minMax = 2) {
+        let resX = 0;
+        let resY = 0;
+        let returnValue = false;
+        let maggioreDi = false;
+        let cicli = -1;
+        for (let i = 0; i < numeroIterazioni && !maggioreDi; i++) {
+          let response = calcolaPotenza(resX, resY);
+          response = aggiungiCostante(response[0], response[1], x, y);
+
+          resX = response[0];
+          resY = response[1];
+
+          if (!(resX <= minMax && resX >= -minMax && resY <= minMax && resY >= -minMax)) {
+            maggioreDi = true;
+            cicli = i;
+          }
+        }
+
+        return cicli;
+      }
+    </script>
+  </body>
+</html>
